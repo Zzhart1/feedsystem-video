@@ -1,0 +1,153 @@
+{
+  "info": {
+    "_postman_id": "f2c9a7b1-5e6d-4a3b-9c8f-1d2e3f4a5b6c",
+    "name": "feedsystem 阶段2验收",
+    "description": "阶段2：视频模块验收。登录后会自存 token，其余请求自动携带。上传类请选择 test 目录下的 test.mp4 / test.jpg。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1 注册",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"tester01\",\n  \"password\": \"pass123456\"\n}" },
+        "url": { "raw": "{{base}}/account/register", "host": ["{{base}}"], "path": ["account", "register"] }
+      }
+    },
+    {
+      "name": "2 登录(自动存token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var j = pm.response.json();",
+              "if (j.token) { pm.collectionVariables.set('token', j.token); console.log('token 已保存'); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"tester01\",\n  \"password\": \"pass123456\"\n}" },
+        "url": { "raw": "{{base}}/account/login", "host": ["{{base}}"], "path": ["account", "login"] }
+      }
+    },
+    {
+      "name": "3 上传封面(form-data)",
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": [] }
+          ]
+        },
+        "url": { "raw": "{{base}}/video/uploadCover", "host": ["{{base}}"], "path": ["video", "uploadCover"] }
+      }
+    },
+    {
+      "name": "4 上传视频(form-data)",
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": [] }
+          ]
+        },
+        "url": { "raw": "{{base}}/video/uploadVideo", "host": ["{{base}}"], "path": ["video", "uploadVideo"] }
+      }
+    },
+    {
+      "name": "5 发布(带#话题)",
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"我的第一个视频 #阶段二验收\",\n  \"description\": \"从零复刻测试\",\n  \"play_url\": \"http://localhost:8080/static/videos/1/20261009/xxx.mp4\",\n  \"cover_url\": \"http://localhost:8080/static/covers/1/20261009/xxx.jpg\"\n}"
+        },
+        "url": { "raw": "{{base}}/video/publish", "host": ["{{base}}"], "path": ["video", "publish"] }
+      }
+    },
+    {
+      "name": "6 作者视频列表",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"author_id\": 1\n}" },
+        "url": { "raw": "{{base}}/video/listByAuthorID", "host": ["{{base}}"], "path": ["video", "listByAuthorID"] }
+      }
+    },
+    {
+      "name": "7 视频详情(调两次看缓存)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"id\": 1\n}" },
+        "url": { "raw": "{{base}}/video/getDetail", "host": ["{{base}}"], "path": ["video", "getDetail"] }
+      }
+    },
+    {
+      "name": "8 分片 init",
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"file_name\": \"test.mp4\",\n  \"chunk_size\": 5242880,\n  \"file_size\": 12582912,\n  \"total_chunks\": 3,\n  \"file_hash\": \"把test.mp4的MD5填这里\"\n}"
+        },
+        "url": { "raw": "{{base}}/video/chunk/init", "host": ["{{base}}"], "path": ["video", "chunk", "init"] }
+      }
+    },
+    {
+      "name": "9 分片 upload(form-data)",
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "upload_id", "value": "上一步返回的upload_id", "type": "text" },
+            { "key": "chunk_index", "value": "0", "type": "text" },
+            { "key": "chunk_hash", "value": "这一片的MD5", "type": "text" },
+            { "key": "file", "type": "file", "src": [] }
+          ]
+        },
+        "url": { "raw": "{{base}}/video/chunk/upload", "host": ["{{base}}"], "path": ["video", "chunk", "upload"] }
+      }
+    },
+    {
+      "name": "10 分片 status",
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"upload_id\": \"上一步返回的upload_id\"\n}" },
+        "url": { "raw": "{{base}}/video/chunk/status", "host": ["{{base}}"], "path": ["video", "chunk", "status"] }
+      }
+    },
+    {
+      "name": "11 分片 complete",
+      "request": {
+        "method": "POST",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"upload_id\": \"上一步返回的upload_id\"\n}" },
+        "url": { "raw": "{{base}}/video/chunk/complete", "host": ["{{base}}"], "path": ["video", "chunk", "complete"] }
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# Go
+*.exe
+feedsystem
+feedsystem.exe
+worker.exe
+.run/
+
+# Node
+node_modules/
+frontend/dist/
+
+# 环境配置
+.env
+config.local.yaml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
